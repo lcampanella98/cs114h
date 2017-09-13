@@ -1,8 +1,6 @@
 package projects.knightstour;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Random;
+import java.util.*;
 
 public class Main {
     public static int bLen = 8;
@@ -12,6 +10,7 @@ public class Main {
     private int startRow, startCol;
     private int numVisits;
     private int totalVisitsNeeded;
+    private SquareComparator sqComp;
 
     public Main(int startRow, int startCol) {
         this.startRow = startRow;
@@ -25,13 +24,18 @@ public class Main {
                 availMoves[i][j] = getAvailableMoves(new Square(i, j));
             }
         }
+        sqComp = new SquareComparator();
     }
 
     public void tour() {
         place(startRow, startCol);
+        int numSpaces = (int)Math.log10(totalVisitsNeeded) + 1;
         for (int[] row : board) {
             for (int visit : row) {
-                System.out.print(visit + (visit< 10 ? "  " : " "));
+                int nDigits = (int)Math.log10(visit) + 1;
+                System.out.print(visit);
+                for (int i = 0; i < numSpaces - nDigits + 1; i++) System.out.print(" ");
+
             }
             System.out.println();
         }
@@ -40,7 +44,15 @@ public class Main {
     private boolean place(int row, int col) {
         board[row][col] = ++numVisits;
         if (numVisits >= totalVisitsNeeded) return true;
-        for (Square mov : availMoves[row][col]) {
+        Square[] curMoves = availMoves[row][col];
+        for (Square mov : curMoves) {
+            mov.futureMoves = 0;
+            for (Square mov2 : availMoves[mov.row][mov.col]) {
+                if (board[mov2.row][mov2.col] <= 0) mov.futureMoves++;
+            }
+        }
+        Arrays.sort(curMoves, sqComp);
+        for (Square mov : curMoves) {
             if (board[mov.row][mov.col] <= 0 && place(mov.row, mov.col)) return true;
         }
         board[row][col] = 0;
@@ -71,18 +83,51 @@ public class Main {
     }
 
     public static void main(String[] args) {
-        int row = 3, col = 4;
+        Scanner scan = new Scanner(System.in);
+        Random rand = new Random();
+        System.out.println("Enter an even-number chess board: ");
+        int size = Integer.parseInt(scan.nextLine());
+        System.out.println("Enter initial row of the knight between 1 and " + size + " or leave blank to use random row and column:");
+        int row, col;
+        try {
+            row = Integer.parseInt(scan.nextLine()) - 1;
+            System.out.println("Enter initial column of the knight between 1 and " + size + " or leave blank to use random row and column:");
+            try {
+                col = Integer.parseInt(scan.nextLine()) - 1;
+            }catch (Exception e) {
+                row = rand.nextInt(size);
+                col = rand.nextInt(size);
+                System.out.println("Starting at " + (row+1) + "," + (col+1));
+            }
+        }catch (Exception e) {
+            row = rand.nextInt(size);
+            col = rand.nextInt(size);
+            System.out.println("Starting at " + (row+1) + "," + (col+1));
+        }
+        System.out.println("Searching...");
+        System.out.println("-----------------------");
+        bLen = size;
         Main m = new Main(row, col);
         long start, end;
         start = System.currentTimeMillis();
         m.tour();
         end = System.currentTimeMillis();
-        System.out.println("\n-----------------------");
-        System.out.println("executed in " + (end - start) + "ms");
+        System.out.println("-----------------------");
+        System.out.println("Solution found in " + (end - start) + " ms");
     }
 }
 
 class Square {
-    int row, col;
+    int row, col, futureMoves;
     public Square(int r, int c) {row = r;col = c;}
+}
+
+class SquareComparator implements Comparator<Square> {
+
+    @Override
+    public int compare(Square o1, Square o2) {
+        if (o1.futureMoves > o2.futureMoves) return 1;
+        if (o1.futureMoves < o2.futureMoves) return -1;
+        return 0;
+    }
 }
