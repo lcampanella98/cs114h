@@ -53,7 +53,7 @@ public class Main {
         }
         Arrays.sort(curMoves, sqComp);
         for (Square mov : curMoves) {
-            if (board[mov.row][mov.col] <= 0 && place(mov.row, mov.col)) return true;
+            if (board[mov.row][mov.col] <= 0 && (mov.futureMoves > 0 || numVisits == totalVisitsNeeded - 1) && place(mov.row, mov.col)) return true;
         }
         board[row][col] = 0;
         --numVisits;
@@ -92,13 +92,7 @@ public class Main {
         try {
             row = Integer.parseInt(scan.nextLine()) - 1;
             System.out.println("Enter initial column of the knight between 1 and " + size + " or leave blank to use random row and column:");
-            try {
-                col = Integer.parseInt(scan.nextLine()) - 1;
-            }catch (Exception e) {
-                row = rand.nextInt(size);
-                col = rand.nextInt(size);
-                System.out.println("Starting at " + (row+1) + "," + (col+1));
-            }
+            col = Integer.parseInt(scan.nextLine()) - 1;
         }catch (Exception e) {
             row = rand.nextInt(size);
             col = rand.nextInt(size);
