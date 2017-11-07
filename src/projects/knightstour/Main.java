@@ -5,35 +5,40 @@ import java.util.*;
 public class Main {
     public static int bLen = 8;
 
-    private int[][] board;
-    private Square[][][] availMoves;
+    private Square[][] board;
+    private Square[][][] allMoves;
     private int startRow, startCol;
-    private int numVisits;
-    private int totalVisitsNeeded;
+    private int moveNumber;
+    private int totalMoves;
     private SquareComparator sqComp;
 
     public Main(int startRow, int startCol) {
         this.startRow = startRow;
         this.startCol = startCol;
-        board = new int[bLen][bLen];
-        numVisits = 0;
-        totalVisitsNeeded = bLen * bLen;
-        availMoves = new Square[bLen][bLen][];
-        for (int i = 0; i < availMoves.length; i++) {
-            for (int j = 0; j < availMoves[i].length; j++) {
-                availMoves[i][j] = getAvailableMoves(new Square(i, j));
+        board = new Square[bLen][bLen];
+        for (int i = 0; i < bLen; i++) {
+            for (int j = 0; j < bLen; j++) board[i][j] = new Square(i, j);
+        }
+        moveNumber = 0;
+        totalMoves = bLen * bLen;
+        allMoves = new Square[bLen][bLen][];
+        for (int i = 0; i < allMoves.length; i++) {
+            for (int j = 0; j < allMoves[i].length; j++) {
+                allMoves[i][j] = getAvailableMoves(board[i][j]);
+                for (int k = 0; k < allMoves[i][j].length; k++) allMoves[i][j][k].accessibility++;
             }
         }
         sqComp = new SquareComparator();
     }
 
-    public void tour() {
+    public void tour(boolean print) {
         place(startRow, startCol);
-        int numSpaces = (int)Math.log10(totalVisitsNeeded) + 1;
-        for (int[] row : board) {
-            for (int visit : row) {
-                int nDigits = (int)Math.log10(visit) + 1;
-                System.out.print(visit);
+        if (!print) return;
+        int numSpaces = (int)Math.log10(totalMoves) + 1;
+        for (Square[] row : board) {
+            for (Square sq : row) {
+                int nDigits = (int)Math.log10(sq.move) + 1;
+                System.out.print(sq.move);
                 for (int i = 0; i < numSpaces - nDigits + 1; i++) System.out.print(" ");
 
             }
@@ -42,21 +47,17 @@ public class Main {
     }
 
     private boolean place(int row, int col) {
-        board[row][col] = ++numVisits;
-        if (numVisits >= totalVisitsNeeded) return true;
-        Square[] curMoves = availMoves[row][col];
-        for (Square mov : curMoves) {
-            mov.futureMoves = 0;
-            for (Square mov2 : availMoves[mov.row][mov.col]) {
-                if (board[mov2.row][mov2.col] <= 0) mov.futureMoves++;
-            }
+        board[row][col].move = ++moveNumber;
+        if (moveNumber >= totalMoves) return true;
+        Square[] availMoves = allMoves[row][col];
+        for (Square mov : availMoves) mov.accessibility--;
+        Arrays.sort(availMoves, sqComp);
+        for (Square mov : availMoves) {
+            if (board[mov.row][mov.col].move <= 0 && (mov.accessibility > 0 || moveNumber == totalMoves - 1) && place(mov.row, mov.col)) return true;
         }
-        Arrays.sort(curMoves, sqComp);
-        for (Square mov : curMoves) {
-            if (board[mov.row][mov.col] <= 0 && (mov.futureMoves > 0 || numVisits == totalVisitsNeeded - 1) && place(mov.row, mov.col)) return true;
-        }
-        board[row][col] = 0;
-        --numVisits;
+        for (Square mov : availMoves) mov.accessibility++;
+        board[row][col].move = 0;
+        --moveNumber;
         return false;
     }
 
@@ -64,25 +65,40 @@ public class Main {
         int r = cur.row, c = cur.col;
         List<Square> moves = new ArrayList<>(8);
         if (r + 2 < bLen) {
-            if (c + 1 < bLen) moves.add(new Square(r + 2, c + 1));
-            if (c - 1 >= 0) moves.add(new Square(r + 2, c - 1));
+            if (c + 1 < bLen) moves.add(board[r + 2][c + 1]);
+            if (c - 1 >= 0) moves.add(board[r + 2][c - 1]);
         }
         if (r - 2 >= 0) {
-            if (c + 1 < bLen) moves.add(new Square(r - 2, c + 1));
-            if (c - 1 >= 0) moves.add(new Square(r - 2, c - 1));
+            if (c + 1 < bLen) moves.add(board[r - 2][c + 1]);
+            if (c - 1 >= 0) moves.add(board[r - 2][c - 1]);
         }
         if (c + 2 < bLen) {
-            if (r + 1 < bLen) moves.add(new Square(r + 1, c + 2));
-            if (r - 1 >= 0) moves.add(new Square(r - 1, c + 2));
+            if (r + 1 < bLen) moves.add(board[r + 1][c + 2]);
+            if (r - 1 >= 0) moves.add(board[r - 1][c + 2]);
         }
         if (c - 2 >= 0) {
-            if (r + 1 < bLen) moves.add(new Square(r + 1, c - 2));
-            if (r - 1 >= 0) moves.add(new Square(r - 1, c - 2));
+            if (r + 1 < bLen) moves.add(board[r + 1][c - 2]);
+            if (r - 1 >= 0) moves.add(board[r - 1][c - 2]);
         }
         return moves.toArray(new Square[0]);
     }
 
     public static void main(String[] args) {
+        long start, end;
+//        start = System.currentTimeMillis();
+//        int l = 24;
+//        bLen = l;
+//        for (int i = 0; i < l; i++) {
+//            for (int j = 0; j < l; j++) {
+//                Main m = new Main(i, j);
+//                System.out.println(i + "," + j);
+//                m.tour(false);
+//            }
+//        }
+//        System.out.println("-----------------------");
+//        end = System.currentTimeMillis();
+//        System.out.println("Solutions found in " + (end - start) + " ms");
+//        if (true) return;
         Scanner scan = new Scanner(System.in);
         Random rand = new Random();
         System.out.println("Enter an even-number chess board: ");
@@ -102,9 +118,8 @@ public class Main {
         System.out.println("-----------------------");
         bLen = size;
         Main m = new Main(row, col);
-        long start, end;
         start = System.currentTimeMillis();
-        m.tour();
+        m.tour(true);
         end = System.currentTimeMillis();
         System.out.println("-----------------------");
         System.out.println("Solution found in " + (end - start) + " ms");
@@ -112,16 +127,22 @@ public class Main {
 }
 
 class Square {
-    int row, col, futureMoves;
-    public Square(int r, int c) {row = r;col = c;}
+    int row, col;
+    int accessibility;
+    int move;
+    public Square(int r, int c) {
+        row = r;
+        col = c;
+        accessibility = 0;
+    }
 }
 
 class SquareComparator implements Comparator<Square> {
 
     @Override
     public int compare(Square o1, Square o2) {
-        if (o1.futureMoves > o2.futureMoves) return 1;
-        if (o1.futureMoves < o2.futureMoves) return -1;
+        if (o1.accessibility > o2.accessibility) return 1;
+        if (o1.accessibility < o2.accessibility) return -1;
         return 0;
     }
 }
