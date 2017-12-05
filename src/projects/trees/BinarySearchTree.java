@@ -6,7 +6,9 @@ package projects.trees;
  *
  */
 
+import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Stack;
 
 public class BinarySearchTree<E extends Comparable<? super E>> extends BinaryTree<E> {
@@ -71,25 +73,17 @@ public class BinarySearchTree<E extends Comparable<? super E>> extends BinaryTre
         return true;
     }
 
+    private void inOrderIt(Node<E> cur, List<E> l) {
+        if (cur != null) {
+            inOrderIt(cur.left, l);
+            l.add(cur.data);
+            inOrderIt(cur.right, l);
+        }
+    }
 
     public Iterator<E> iterator() {
-        Stack<Node<E>> stack = new Stack<>();
-        stack.push(root);
-
-        return new Iterator<E>() {
-            private Stack<Node<E>> s = stack;
-
-            public boolean hasNext() {
-                return !s.empty();
-            }
-
-
-            public E next() {
-                Node<E> next = s.pop();
-                if (next.right != null) s.push(next.right);
-                if (next.left != null) s.push(next.left);
-                return next.data;
-            }
-        };
+        List<E> l = new ArrayList<>();
+        inOrderIt(root, l);
+        return l.iterator();
     }
 }
