@@ -28,9 +28,9 @@ public class Sorts {
         T l, r, max, temp = array[i];
         li = 2 * i + 1;
         while (li < lim) {
-            ri = li + 1;
-            if (ri < lim) {
-                l = array[li];
+            l = array[li];
+
+            if ((ri = li + 1) < lim) {
                 r = array[ri];
                 if (l.compareTo(r) > 0) {
                     max = l;
@@ -40,7 +40,7 @@ public class Sorts {
                     maxi = ri;
                 }
             } else {
-                max = array[li];
+                max = l;
                 maxi = li;
             }
             if (temp.compareTo(max) < 0) {
